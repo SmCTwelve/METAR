@@ -2,7 +2,7 @@
 Request and decode [METAR](https://en.wikipedia.org/wiki/METAR) weather data with multiple options. 
 
 ## DESCRIPTION
-This simple program will display the METAR for an airport, or range of airports, by specifying the [ICAO](https://en.wikipedia.org/wiki/International_Civil_Aviation_Organization_airport_code). An optional timestamp can be used to get the weather for a specific time, or if two timestamps are present all METARs between the first and last time will be shown.
+This simple program will display the METAR for an airport, or range of airports, by specifying the [ICAO](https://en.wikipedia.org/wiki/International_Civil_Aviation_Organization_airport_code). An optional timestamp can be used to get the weather for a specific time, or if two timestamps are present all METARs between the first and last time will be shown. The program can parse the raw METAR and translate it into a formatted output in plain English describing the conditions for ease of use in flight planning. 
 
 Uses the NOAA [Aviation Weather Center's](https://www.aviationweather.gov/metar?gis=off) ADDS API for requests.  
 
