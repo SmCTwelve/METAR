@@ -1,12 +1,22 @@
-#! usr/bin/python3
+#!/usr/bin/env python3
 
 '''
-Get METAR data for the specified ICAO or range of ICAO's for the current
-time, or a specified timestamp or range. Use input to request METAR from
-ADDS aviation weather database API. Optionally parse and decode the METAR
-for a simplied output describing the conditions, or default to a raw data
-output for each request.
+Get METAR data.
 
-Usage: metar.py <ICAO> [<time>, [<timeEnd>]] [-decode, -d] [-help, -h]
+Usage: metar.py <ICAO> [<time>] [<timeEnd>] [-r | --raw] [--help | -h]
+
+Options:
+
+-h --help  Show help screen and exit.
+-r --raw   Output raw METAR data.
 '''
 
+from docopt import docopt
+
+# Get arguments and options as dict
+args = docopt(__doc__)
+
+# Store values
+icao = args['<ICAO>']
+time = [args['<time>'], args['<timeEnd>']]
+raw = args['--raw']
