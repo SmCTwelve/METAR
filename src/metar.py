@@ -3,7 +3,7 @@
 '''
 Get METAR data.
 
-Usage: metar.py <ICAO> [<time>] [<timeEnd>] [-r | --raw] [--help | -h]
+Usage: metar.py <ICAO> [<startTime> <endTime>] [-r | --raw] [--help | -h]
 
 Options:
 
@@ -11,25 +11,28 @@ Options:
 -r --raw   Output raw METAR data.
 '''
 
+import sys
 import logging
 from docopt import docopt
 
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
-# Get arguments and options from CLI as dict
+# Get arguments and options as dictionary
 args = docopt(__doc__)
 
 # Store values
 icao = args['<ICAO>'].upper()
-time = [args['<time>'], args['<timeEnd>']]
+startTime = args['<startTime>']
+endTime = args['<endTime>']
 raw = args['--raw']
+print(args)
 
 logging.debug('Given ICAO is %s and raw ouput is %s' % (icao, raw))
 
-# Check if a single time, time range, or no times given
-if None not in time:
-    logging.debug('A time range was provided: {}'.format(time))
-elif time[0] is not None:
-    logging.debug('A single time was given: {}'.format(time[0]))
+if (startTime is None and endTime is None):
+    logging.debug('No time range provided, using most recent time.')
+    sys.exit()
+elif (startTime is None or endTime is None):
+    print('Start and end time required; leave blank for most recent METAR.')
 else:
-    logging.debug('No time given: {}'.format(time))
+    logging.debug('Getting all METARS between {} and {}'.format(startTime, endTime))
