@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-Get METAR data.
+\r\nGet METAR data.
 
 Usage: metar.py <ICAO> [<startTime> <endTime>] [-r | --raw] [--help | -h]
 
@@ -22,6 +22,7 @@ Examples:
 * metar.py KLAX "08 11:00" "10 21:00" --raw
 * metar.py KLAX 11h 13h
 * metar.py KLAX
+\r\n
 '''
 
 import sys
@@ -40,15 +41,19 @@ startTime = args['<startTime>']
 endTime = args['<endTime>']
 raw = args['--raw']
 
+print()
 logging.debug('Given ICAO is %s and raw ouput is %s' % (icao, raw))
 
-# TO DO
 # Send data to request.py
-
 if (startTime is None and endTime is None):
+    # No time range provided, request most recent
     logging.debug('No time range provided, using most recent time.')
+    request.metar(icao)
 elif (startTime is None or endTime is None):
+    # A single time given when both required, exit
     print('Start and end time required; leave blank for most recent METAR.')
     sys.exit()
 else:
+    # Both start and end times given, request within range
     logging.debug('Getting all METARS between {} and {}'.format(startTime, endTime))
+    request.metar(icao, startTime, endTime, mostRecent=False)
