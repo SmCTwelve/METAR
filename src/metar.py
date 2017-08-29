@@ -14,16 +14,24 @@ Details:
 
 An optional time range may be provided to return all METARs (up to 3 days)
 between the start and end times. If omitted, the most recent METAR within the
-past hour will be requested. A date and time must be quoted as a string.
+past hour will be requested. When giving both a date and a time it must be
+quoted in a string.
 
 Examples:
 * metar.py KLAX "2017-08-18 11:00:00" "2017-08-20 16:30:00"
 * metar.py KLAX 11:00 21:00
-* metar.py KLAX "08 11:00" "10 21:00" --raw
+* metar.py KLAX "08 Aug 11:00" "10 Aug 21:00" --raw
 * metar.py KLAX 11h 13h
 * metar.py KLAX
 \r\n
 '''
+
+#########
+# TO DO #
+#########
+# Handle multiple ICAO arguments, e.g. DEP, ARR
+# Request and display the first ICAO, then request and display the second
+# so they are separated correctly in the output
 
 import sys
 import logging

@@ -21,6 +21,7 @@ import dateutil.parser
 # Better interpretation of time values e.g. 1100, 1100h, 11
 # Interpret time first rather than date or year
 # Write custom RegEx date parser for above formats instead of dateutil
+# Handle multiple ICAO arguments
 
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
