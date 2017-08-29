@@ -10,13 +10,17 @@ translations for appropriate conditions.
 
 import xml.etree.ElementTree as ET
 import dateutil.parser
-import request
 import re
+import logging
 
-# ## TO DO ##
-# Display raw out
-# Integrate with main app
+#########
+# TO DO #
+#########
+# Interpret additional remarks (RMK ...)
 # Refactor and clean up
+# Incorporate regex into translate to clean up dict entries
+
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
 
 def trans(text):
@@ -53,16 +57,17 @@ def trans(text):
         "-TSRA": "Thunderstorm and light rain",
         "+TSRA": "Thunderstorm and heavy rain"
     }
-    matches = re.search(" ".join(translation.keys()), "[{}]".format(text))
-    print("Matches {}".format(matches))
     return translation.get(text, "")
 
 
-def display(data):
+def display(data, raw):
     '''
     Present the METAR data as formatted output.
+
+    :param raw: -- display raw text if true.
     :param data: -- dictionary with decoded data.
     '''
+    logging.debug("Displaying results...")
 
     print()
     print('-' * 100)
@@ -73,43 +78,47 @@ def display(data):
     print(data["date"])
     print()
 
-    # Conditions summary
-    print("Conditions: {} -- {}"
-          .format(
-            data["cond"],
-            " ".join(data["wx"]))
-          )
+    # Show raw text if requested
+    if (raw is True):
+            print(data["raw"])
+    else:
+        # Conditions summary
+        print("Conditions: {} -- {}"
+              .format(
+                data["cond"],
+                " ".join(data["wx"]))
+              )
 
-    # Wind, temp, visibility, pressure
-    print("Wind: {} degrees at {} kts"
-          .format(
-            data["wind"][0],
-            data["wind"][1]
-          ), end='\t')
-    print("Temperature: {}C"
-          .format(data["temp"]), end='\t')
-    print("Visibility: {}sm"
-          .format(data["vis"]), end='\t')
-    print("QNH:", "{}".format(data["QNH"]))
-    print('-' * 100)
+        # Wind, temp, visibility, pressure
+        print("Wind: {} degrees at {} kts"
+              .format(
+                data["wind"][0],
+                data["wind"][1]
+              ), end='\t')
+        print("Temperature: {}C"
+              .format(data["temp"]), end='\t')
+        print("Visibility: {}sm"
+              .format(data["vis"]), end='\t')
+        print("Pressure:", "{}".format(data["QNH"]))
+        print('-' * 100)
 
-    # Sky condition, base and ceiling cloud layers
-    print("Sky conditions:")
-    print("\t {:>20} {:>12}".format("CLOUD", "ALT (FT)"))
-    print("\tBASE\t {:>12} {:>12}"
-          .format(
-            data["clouds"]["base"][0],
-            data["clouds"]["base"][1])
-          )
-    print("\tCEILING\t {:>12} {:>12}"
-          .format(
-            data["clouds"]["ceiling"][0],
-            data["clouds"]["ceiling"][1])
-          )
+        # Sky condition, base and ceiling cloud layers
+        print("Sky conditions:")
+        print("\t {:>20} {:>12}".format("CLOUD", "ALT (FT)"))
+        print("\tBASE\t {:>12} {:>12}"
+              .format(
+                data["clouds"]["base"][0],
+                data["clouds"]["base"][1])
+              )
+        print("\tCEILING\t {:>12} {:>12}"
+              .format(
+                data["clouds"]["ceiling"][0],
+                data["clouds"]["ceiling"][1])
+              )
     print()
 
 
-def parse(xml):
+def parse(xml, raw):
     '''
     Parse XML data and store values.
 
@@ -119,10 +128,13 @@ def parse(xml):
     dictionary to be accessed during output.
 
     :param xml: -- the string of XML data to be parsed.
+    :param raw: -- if the raw METAR text should be displayed.
     :return data: -- dict of decoded data.
     '''
     tree = ET.fromstring(xml)
     root = tree.find("data")
+
+    logging.debug("Parsing XML.")
 
     # Iterate over each METAR returned
     for metar in root.iterfind("METAR"):
@@ -168,15 +180,20 @@ def parse(xml):
         ]
 
         # Get QNH, if tag not present match it from the raw text string
-        if (metar.findtext("sea_level_pressure_mb") is not None):
-            QNH = metar.findtext("sea_level_pressure_mb")
+        # Search for AXXXX or QXXXX
+        QNH = re.search("([QA]\d{4})", metar.findtext("raw_text")).group()
+        if ("A" in QNH):
+            # If Altimeter, strip letter and add decimal; e.g. 29.92
+            QNH = QNH[1:3] + "." + QNH[3:] + " inHg"
         else:
-            # Search for AXXXX or QXXXX
-            QNH = re.search(metar.findtext("raw_text"),
-                            "([Q]\d{4})|([A]\d{4})")
+            # Else using QNH, strip letter
+            QNH = QNH.lstrip("Q") + " mb"
 
         # Get visibility
         vis = metar.findtext("visibility_statute_mi")
+
+        # Raw metar string
+        rawtext = metar.findtext("raw_text")
 
         # Final data for output
         data = {
@@ -188,11 +205,8 @@ def parse(xml):
             "clouds": clouds,
             "wind": wind,
             "QNH": QNH,
-            "vis": vis
+            "vis": vis,
+            "raw": rawtext
         }
-    display(data)
-    return data
 
-
-
-parse(request.metar("KIAH"))
+    display(data, raw)

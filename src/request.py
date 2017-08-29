@@ -84,15 +84,13 @@ def metar(icao, startTime=None, endTime=None, mostRecent=True):
     '''
     Request METAR from API.
 
-    The :param icao: is required. Optional :param startTime: and
-    :param endTime: may be provided to return all METARs within the range.
-    If no times are given the :param mostRecent: will be used, which
+    The :param icao: is required. Optional :startTime: and
+    :endTime: may be provided to return all METARs within the range.
+    If no times are given the :mostRecent: will be used, which
     defaults to ``True`` if no other parameters are given.
     '''
     text = getResponse(makeQuery(icao, startTime, endTime, mostRecent)).text
-    print()
-    print("RESPONSE:\r\n")
-    print(text)
+    return text
 
 
 # API request url; append params
