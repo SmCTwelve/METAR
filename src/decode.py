@@ -67,8 +67,6 @@ def display(data, raw):
     :param raw: -- display raw text if true.
     :param data: -- dictionary with decoded data.
     '''
-    logging.debug("Displaying results...")
-
     print()
     print('-' * 100)
 
@@ -134,7 +132,7 @@ def parse(xml, raw):
     tree = ET.fromstring(xml)
     root = tree.find("data")
 
-    logging.debug("Parsing XML.")
+    logging.debug("Parsing XML...")
 
     # Iterate over each METAR returned
     for metar in root.iterfind("METAR"):
@@ -157,22 +155,28 @@ def parse(xml, raw):
         cloudReports = metar.findall("sky_condition")
         # Store base and ceiling cover and altitude as dict
         # Ceiling is last cloud report in list, base is first
-        clouds = {
-          "base": [
-              trans(cloudReports[0].get("sky_cover")),
-              cloudReports[0].get("cloud_base_ft_agl")
-          ],
-          "ceiling": [
-            trans(cloudReports[len(cloudReports) - 1].get("sky_cover")),
-            cloudReports[len(cloudReports) - 1].get("cloud_base_ft_agl")
-          ]
-        }
-        # Use empty strings if no alts given
-        if (clouds["base"][1] is None):
-            clouds["base"][1] = ""
-        if (clouds["ceiling"][1] is None):
-            clouds["ceiling"][1] = ""
+        if (len(cloudReports) > 0):
+            clouds = {
+              "base": [
+                  trans(cloudReports[0].get("sky_cover")),
+                  cloudReports[0].get("cloud_base_ft_agl")
+              ],
+              "ceiling": [
+                trans(cloudReports[len(cloudReports) - 1].get("sky_cover")),
+                cloudReports[len(cloudReports) - 1].get("cloud_base_ft_agl")
+              ]
+            }
+            # Use empty strings if no alts given
+            if (clouds["base"][1] is None):
+                clouds["base"][1] = ""
+            if (clouds["ceiling"][1] is None):
+                clouds["ceiling"][1] = ""
 
+        else:
+            clouds = {
+                "base": ["Clear", "None"],
+                "ceiling": ["Clear", "None"]
+            }
         # Store wind direction and speed
         wind = [
             metar.findtext("wind_dir_degrees"),
@@ -208,5 +212,5 @@ def parse(xml, raw):
             "vis": vis,
             "raw": rawtext
         }
-
-    display(data, raw)
+        # Display the current METAR
+        display(data, raw)
