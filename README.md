@@ -6,6 +6,9 @@ This simple program will display the METAR for an airport, or range of airports 
 
 Uses the NOAA [Aviation Weather Center's](https://www.aviationweather.gov/metar?gis=off) ADDS API for requests.
 
+#### INSTALL
+Fork the repository or [download the latest release](https://github.com/SmCTwelve/METAR/releases/latest). Then from the root directory run `pip install -r requirements.txt` to install the required libraries. Requires Python 3.5+. 
+
 #### USAGE
 ```
 py metar.py <ICAO> [<start> <end>] [--raw] [--help]
