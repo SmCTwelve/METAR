@@ -13,14 +13,8 @@ import dateutil.parser
 import re
 import logging
 
-#########
-# TO DO #
-#########
-# Interpret additional remarks (RMK ...)
-# Refactor and clean up
-# Incorporate regex into translate to clean up dict entries
 
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
 
 def trans(text):
@@ -31,33 +25,44 @@ def trans(text):
     :return: -- translated string, or empty string if no match.
     '''
     translation = {
-        "MVFR": "Marginal VFR",
-        "VFR": "VFR",
-        "IFR": "IFR",
-        "-RA": "Light rain",
-        "RA": "Rain",
-        "+RA": "Heavy rain",
-        "TS": "Thunderstorm",
-        "-SN": "Light snow",
-        "SN": "Snow",
-        "+SN": "Heavy snow",
-        "CB": "Cumulonibus",
-        "TCU": "Towering cumulus",
-        "NSC": "No significant weather",
-        "NOSIG": "No significant weather",
-        "CLR": "Clear",
-        "SKR": "Clear",
-        "FEW": "Few",
-        "BKN": "Broken",
-        "SCT": "Scattered",
-        "OVC": "Overcast",
-        "VCTS": "Thunderstorms in the vicinity",
-        "VC": "Vicinity",
-        "TSRA": "Thunderstorm and rain",
-        "-TSRA": "Thunderstorm and light rain",
-        "+TSRA": "Thunderstorm and heavy rain"
+        ("VFR", "VMC"): "VFR",
+        ("MVFR",): "Marginal",
+        ("IFR", "IMC"): "IFR",
+        ("RA",): "Rain",
+        ("SN", "SG"): "Snow",
+        ("TS",): "Thunderstorm",
+        ("CB",): "Cumulonibus",
+        ("TSRA",): "Rain and thunderstorm",
+        ("TCU",): "Towering cumulus",
+        ("NSC", "NOSIG"): "No significant weather",
+        ("CLR", "SKR"): "Clear",
+        ("FEW",): "Few",
+        ("BKN",): "Broken",
+        ("SCT",): "Scattered",
+        ("OVC",): "Overcast",
+        ("FG",): "Fog",
+        ("HZ",): "Haze",
+        ("IC", "GR", "GS", "PL"): "Hail/Ice",
+        ("DZ",): "Drizzle",
+        ("FZ",): "Freezing",
+        ("SA", "PO"): "Dust/Sand",
+        ("DS", "SS"): "Sandstorm",
+        ("VA",): "Volcanic ash",
+        ("SH",): "Showers",
+        ("VC",): "in vincinity",
     }
-    return translation.get(text, "")
+    matches = []
+    if text.startswith("+"):
+        matches.append("Heavy")
+        text = text.lstrip("+")
+    if text.startswith("-"):
+        matches.append("Light")
+        text = text.lstrip("-")
+    for keys, value in translation.items():
+        for k in keys:
+            if k == text:
+                matches.append(value)
+    return " ".join(matches)
 
 
 def display(data, raw):
@@ -78,20 +83,20 @@ def display(data, raw):
 
     # Show raw text if requested
     if (raw is True):
-            print(data["raw"])
+        print(data["raw"])
     else:
         # Conditions summary
         print("Conditions: {} -- {}"
               .format(
-                data["cond"],
-                " ".join(data["wx"]))
+                  data["cond"],
+                  "; ".join(data["wx"]))
               )
 
         # Wind, temp, visibility, pressure
         print("Wind: {} degrees at {} kts"
               .format(
-                data["wind"][0],
-                data["wind"][1]
+                  data["wind"][0],
+                  data["wind"][1]
               ), end='\t')
         print("Temperature: {}C"
               .format(data["temp"]), end='\t')
@@ -105,13 +110,13 @@ def display(data, raw):
         print("\t {:>20} {:>12}".format("CLOUD", "ALT (FT)"))
         print("\tBASE\t {:>12} {:>12}"
               .format(
-                data["clouds"]["base"][0],
-                data["clouds"]["base"][1])
+                  data["clouds"]["base"][0],
+                  data["clouds"]["base"][1])
               )
         print("\tCEILING\t {:>12} {:>12}"
               .format(
-                data["clouds"]["ceiling"][0],
-                data["clouds"]["ceiling"][1])
+                  data["clouds"]["ceiling"][0],
+                  data["clouds"]["ceiling"][1])
               )
     print()
 
@@ -140,16 +145,16 @@ def parse(xml, raw):
         conditions = trans(metar.findtext("flight_category"))
 
         # Translate weather remarks, if present
-        if (metar.find("wx_string") is not None):
+        if metar.find("wx_string") is not None:
             # Split weather remarks into list of individual strings
-            weatherstring = metar.findtext("wx_string").split(" ")
+            weatherStringList = metar.findtext("wx_string").split(" ")
             wx = []
             # Translate each weather string and append to list
-            for weather in range(len(weatherstring)):
-                wx.append(trans(weatherstring[weather]))
+            for weather in weatherStringList:
+                wx.append(trans(weather))
         # If no weather remarks use empty string
         else:
-            wx = ""
+            wx = [trans("NOSIG")]
 
         # Get all cloud report elements as list
         cloudReports = metar.findall("sky_condition")
@@ -157,14 +162,14 @@ def parse(xml, raw):
         # Ceiling is last cloud report in list, base is first
         if (len(cloudReports) > 0):
             clouds = {
-              "base": [
-                  trans(cloudReports[0].get("sky_cover")),
-                  cloudReports[0].get("cloud_base_ft_agl")
-              ],
-              "ceiling": [
-                trans(cloudReports[len(cloudReports) - 1].get("sky_cover")),
-                cloudReports[len(cloudReports) - 1].get("cloud_base_ft_agl")
-              ]
+                "base": [
+                    trans(cloudReports[0].get("sky_cover")),
+                    cloudReports[0].get("cloud_base_ft_agl")
+                ],
+                "ceiling": [
+                    trans(cloudReports[len(cloudReports) - 1].get("sky_cover")),
+                    cloudReports[len(cloudReports) - 1].get("cloud_base_ft_agl")
+                ]
             }
             # Use empty strings if no alts given
             if (clouds["base"][1] is None):
@@ -185,7 +190,7 @@ def parse(xml, raw):
 
         # Get QNH, if tag not present match it from the raw text string
         # Search for AXXXX or QXXXX
-        QNH = re.search("([QA]\d{4})", metar.findtext("raw_text")).group()
+        QNH = re.search(r"([QA]\d{4})", metar.findtext("raw_text")).group()
         if ("A" in QNH):
             # If Altimeter, strip letter and add decimal; e.g. 29.92
             QNH = QNH[1:3] + "." + QNH[3:] + " inHg"

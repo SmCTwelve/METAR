@@ -26,13 +26,6 @@ Examples:
 \r\n
 '''
 
-#########
-# TO DO #
-#########
-# Handle multiple ICAO arguments, e.g. DEP, ARR
-# Request and display the first ICAO, then request and display the second
-# so they are separated correctly in the output
-
 import sys
 import logging
 import request
@@ -50,7 +43,7 @@ startTime = args['<startTime>']
 endTime = args['<endTime>']
 raw = args['--raw']
 
-print()
+print()  # blank line
 logging.debug('Given ICAO is %s and raw ouput is %s' % (icao, raw))
 
 # Send data to request.py and store response
